@@ -208,10 +208,8 @@ inline Vector<T>::Vector(const Vector& v) : Vector(v.Size())
 template<VectorItemRequires T>
 inline Vector<T>::Vector(Vector&& v)
 {
-	m_Data = v.m_Data;
+	m_Data = std::move(v.m_Data);
 	m_Size = v.m_Size;
-
-	v.m_Data.reset();
 }
 
 template<VectorItemRequires T>
