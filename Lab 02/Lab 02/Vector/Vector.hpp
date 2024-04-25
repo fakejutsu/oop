@@ -202,8 +202,7 @@ inline Vector<T>::Vector(const Vector& v) : Vector(v.Size())
 {
 	for (int i = 0; i < v.Size(); ++i)
 	{
-		Vector<T>& alias = (*this);
-		alias[i] = v[i];
+		(*this)[i] = v[i];
 	}
 }
 template<VectorItemRequires T>
