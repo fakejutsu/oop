@@ -123,7 +123,7 @@ public:
 	bool operator ==(Vector<T> const& v2) const;
 	bool operator !=(Vector<T> const& v2) const;
 
-	decltype(auto) VectorLen() const noexcept;
+	double VectorLen() const noexcept;
 
 	decltype(auto) Normalized();
 
@@ -284,7 +284,7 @@ inline bool Vector<T>::operator!=(Vector<T> const& v2) const
 }
 
 template<VectorItemRequires T>
-inline decltype(auto) Vector<T>::VectorLen() const noexcept
+inline double Vector<T>::VectorLen() const noexcept
 {
 	decltype(T() * T() + T() * T()) sqSum = 0;
 	decltype(sqrt(sqSum)) len = 0;
