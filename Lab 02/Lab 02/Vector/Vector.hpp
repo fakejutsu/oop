@@ -119,9 +119,9 @@ public:
 
 #pragma endregion operations
 
-	std::strong_ordering operator <=>(Vector<T> const& v2);
-	bool operator ==(Vector<T> const& v2);
-	bool operator !=(Vector<T> const& v2);
+	std::strong_ordering operator <=>(Vector<T> const& v2) const;
+	bool operator ==(Vector<T> const& v2) const;
+	bool operator !=(Vector<T> const& v2) const;
 
 	decltype(auto) VectorLen() const noexcept;
 
@@ -265,20 +265,20 @@ inline int Vector<T>::Size() const noexcept
 }
 
 template<VectorItemRequires T>
-inline std::strong_ordering Vector<T>::operator<=>(Vector<T> const& v2)
+inline std::strong_ordering Vector<T>::operator<=>(Vector<T> const& v2) const
 {
 	return this->VectorLen() <=> v2.VectorLen();
 }
 
 
 template<VectorItemRequires T>
-inline bool Vector<T>::operator==(Vector<T> const& v2)
+inline bool Vector<T>::operator==(Vector<T> const& v2) const
 {
 	return this->VectorLen() == v2.VectorLen();
 }
 
 template<VectorItemRequires T>
-inline bool Vector<T>::operator!=(Vector<T> const& v2)
+inline bool Vector<T>::operator!=(Vector<T> const& v2) const
 {
 	return !((*this) == v2);
 }
