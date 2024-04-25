@@ -34,10 +34,10 @@ private:
 	void AllocSize(int size);
 
 	template<VectorItemRequires U>
-	void CheckZeroDiv(int line, Vector<U> const& vectorToCheck);
+	void CheckZeroDiv(int line, Vector<U> const& vectorToCheck) const;
 
 	template<VectorItemRequires U>
-	void CheckZeroDiv(int line, U numberToCheck);
+	void CheckZeroDiv(int line, U numberToCheck) const;
 
 	void CheckLength(int line);
 	void CheckRange(int line, int indexToCheck);
@@ -75,16 +75,16 @@ public:
 
 
 	template <VectorItemRequires U>
-	decltype(auto) Sum(Vector<U> const& v2);
+	decltype(auto) Sum(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) Mul(Vector<U> const& v2);
+	decltype(auto) Mul(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) Div(Vector<U> const& v2);
+	decltype(auto) Div(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) Diff(Vector<U> const& v2);
+	decltype(auto) Diff(Vector<U> const& v2) const;
 
 
 	template <typename U>
@@ -92,29 +92,29 @@ public:
 
 
 	template <VectorItemRequires U>
-	decltype(auto) operator +(const U& el);
+	decltype(auto) operator +(const U& el) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) operator +(Vector<U> const& v2);
+	decltype(auto) operator +(Vector<U> const& v2) const;
 
 
 	template <VectorItemRequires U>
-	decltype(auto) operator -(const U& el);
+	decltype(auto) operator -(const U& el) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) operator -(Vector<U> const& v2);
+	decltype(auto) operator -(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) operator *(Vector<U> const& v2);
+	decltype(auto) operator *(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) operator *(const U& el);
+	decltype(auto) operator *(const U& el) const;
 
 	template<VectorItemRequires U>
-	decltype(auto) operator/(Vector<U> const& v2);
+	decltype(auto) operator/(Vector<U> const& v2) const;
 
 	template<VectorItemRequires U>
-	decltype(auto) operator/(const U& el);
+	decltype(auto) operator/(const U& el) const;
 
 
 #pragma endregion operations
@@ -368,7 +368,7 @@ std::ostream& operator << (std::ostream& os, const Vector<T>& v)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline void Vector<T>::CheckZeroDiv(int line, Vector<U> const& vectorToCheck)
+inline void Vector<T>::CheckZeroDiv(int line, Vector<U> const& vectorToCheck) const
 {
 	for (int i = 0; i < this->Size(); ++i)
 	{
@@ -382,7 +382,7 @@ inline void Vector<T>::CheckZeroDiv(int line, Vector<U> const& vectorToCheck)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline void Vector<T>::CheckZeroDiv(int line, U numberToCheck)
+inline void Vector<T>::CheckZeroDiv(int line, U numberToCheck) const
 {
 	if (numberToCheck == 0)
 	{
@@ -393,7 +393,7 @@ inline void Vector<T>::CheckZeroDiv(int line, U numberToCheck)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Sum(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Sum(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -417,7 +417,7 @@ inline decltype(auto) Vector<T>::Sum(Vector<U> const& v2)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Mul(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Mul(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -441,7 +441,7 @@ inline decltype(auto) Vector<T>::Mul(Vector<U> const& v2)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Div(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Div(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -452,8 +452,6 @@ inline decltype(auto) Vector<T>::Div(Vector<U> const& v2)
 	{
 		throw OperationInvalidParams(__FILE__, __LINE__, "Невозможно разделить разные по размеру векторы");
 	}
-
-	std::cout << "Debug: " << *this << '\n' << v2 << '\n';
 
 	CheckZeroDiv(__LINE__, v2);
 
@@ -469,7 +467,7 @@ inline decltype(auto) Vector<T>::Div(Vector<U> const& v2)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Diff(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Diff(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -515,7 +513,7 @@ inline decltype(auto) Vector<T>::ScalarProduct(const Vector<U>& v2)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator+(const U& el)
+inline decltype(auto) Vector<T>::operator+(const U& el) const
 {
 	if (this->IsEmpty())
 	{
@@ -534,7 +532,7 @@ inline decltype(auto) Vector<T>::operator+(const U& el)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator-(const U& el)
+inline decltype(auto) Vector<T>::operator-(const U& el) const
 {
 	if (this->IsEmpty())
 	{
@@ -553,21 +551,21 @@ inline decltype(auto) Vector<T>::operator-(const U& el)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator+(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::operator+(Vector<U> const& v2) const
 {
 	return Sum(v2);
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator-(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::operator-(Vector<U> const& v2) const
 {
 	return Diff(v2);
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator*(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::operator*(Vector<U> const& v2) const
 {
 	return Mul(v2);
 }
@@ -575,7 +573,7 @@ inline decltype(auto) Vector<T>::operator*(Vector<U> const& v2)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator*(const U& el)
+inline decltype(auto) Vector<T>::operator*(const U& el) const
 {
 	if (this->IsEmpty())
 	{
@@ -595,7 +593,7 @@ inline decltype(auto) Vector<T>::operator*(const U& el)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator/(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::operator/(Vector<U> const& v2) const
 {
 	return Div(v2);
 }
@@ -603,7 +601,7 @@ inline decltype(auto) Vector<T>::operator/(Vector<U> const& v2)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::operator/(const U& el)
+inline decltype(auto) Vector<T>::operator/(const U& el) const
 {
 	if (this->IsEmpty())
 	{
