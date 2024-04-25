@@ -63,7 +63,7 @@ public:
 
 	Vector(int length, T* arr);
 
-	explicit Vector(const std::initializer_list<T> fromList);
+	explicit Vector(const std::initializer_list<T> & fromList);
 
 	static Vector<T> UnitVector(int length);
 
@@ -242,10 +242,10 @@ inline Vector<T>::Vector(int length, T* arr) : Vector(length)
 }
 
 template<VectorItemRequires T>
-inline Vector<T>::Vector(const std::initializer_list<T> fromList) : Vector(fromList.end() - fromList.begin())
+inline Vector<T>::Vector(const std::initializer_list<T> & fromList) : Vector(fromList.end() - fromList.begin())
 {
 	int i = 0;
-	for (auto& it : fromList)
+	for (const auto& it : fromList)
 	{
 		(*this)[i] = it;
 		++i;
