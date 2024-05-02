@@ -23,7 +23,8 @@ public:
 
     Iterator() = default;
     Iterator(Iterator<T> const &) noexcept;
-    Iterator(Vector<T> const &) noexcept;
+    explicit Iterator(Vector<T> &) noexcept;
+    Iterator(std::shared_ptr<T[]> const& dataPtr, int size) noexcept;
 
     ~Iterator() = default;
 
@@ -215,11 +216,16 @@ inline Iterator<T>::Iterator(Iterator<T>const &  it) noexcept
 }
 
 template<RandomAccess T>
-inline Iterator<T>::Iterator(const Vector<T>& v) noexcept
+inline Iterator<T>::Iterator(Vector<T> & v) noexcept : Iterator<T>(v.begin())
+{   
+}
+
+template<RandomAccess T>
+inline Iterator<T>::Iterator(std::shared_ptr<T[]> const& dataPtr, int size) noexcept
 {
-    this->dataPtr = v.m_Data;
-    this->size = v.Size();
+    this->dataPtr = dataPtr;
     this->index = 0;
+    this->size = size;
 }
 
 template<RandomAccess T>
@@ -237,6 +243,8 @@ inline T* Iterator<T>::operator->()
     CheckExpired(__LINE__);
     CheckRange(__LINE__, this->index);
 
-    return GetPtr();
+    auto vectorShared = this->vectorPtr.lock();
+
+    return &((*vectorShared)[this->index]);
 }
 

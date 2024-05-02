@@ -22,9 +22,6 @@
 template <VectorItemRequires T>
 class Vector : public VectorBase
 {
-	friend Iterator<T>;
-	friend ConstIterator<T>;
-
 private:
 	int m_Size = 0;
 	std::shared_ptr<T[]> m_Data = nullptr;
@@ -40,7 +37,7 @@ private:
 	void CheckZeroDiv(int line, U numberToCheck) const;
 
 	void CheckLength(int line);
-	void CheckRange(int line, int indexToCheck);
+	void CheckRange(int line, int indexToCheck) const;
 
 public:
 
@@ -55,7 +52,7 @@ public:
 
 	Vector(const Vector& v);
 
-	Vector(Vector&& v);
+	Vector(Vector&& v) noexcept;
 
 	Vector(int length, std::shared_ptr<T[]> arr);
 
@@ -171,7 +168,7 @@ inline void Vector<T>::CheckLength(int line)
 }
 
 template<VectorItemRequires T>
-inline void Vector<T>::CheckRange(int line, int indexToCheck)
+inline void Vector<T>::CheckRange(int line, int indexToCheck) const
 {
 	if (this->Size() <= indexToCheck || indexToCheck < 0)
 	{
@@ -206,7 +203,7 @@ inline Vector<T>::Vector(const Vector& v) : Vector(v.Size())
 	}
 }
 template<VectorItemRequires T>
-inline Vector<T>::Vector(Vector&& v)
+inline Vector<T>::Vector(Vector&& v) noexcept
 {
 	m_Data = std::move(v.m_Data);
 	m_Size = v.m_Size;
@@ -311,40 +308,40 @@ inline decltype(auto) Vector<T>::Normalized()
 template<VectorItemRequires T>
 inline T& Vector<T>::operator[](int index)
 {
-	auto it = this->begin();
-	return it[index];
+	CheckRange(__LINE__, index);
+	return m_Data[index];
 }
 
 template<VectorItemRequires T>
 inline const T& Vector<T>::operator[](int index) const
 {
-	auto it = this->cbegin();
-	return it[index];
+	CheckRange(__LINE__, index);
+	return m_Data[index];
 }
 
 template<VectorItemRequires T>
 inline Iterator<T> Vector<T>::begin() noexcept
 {
-	return Iterator<T>(*this);
+	return Iterator(m_Data, m_Size);
 }
 
 template<VectorItemRequires T>
 inline Iterator<T> Vector<T>::end() noexcept
 {
-	return Iterator<T>(*this) + this->Size();
+	return Iterator(m_Data, m_Size) + this->Size();
 }
 
 template<VectorItemRequires T>
 inline ConstIterator<T> Vector<T>::cbegin() const noexcept
 {
-	return ConstIterator<T>(*this);
+	return ConstIterator<T>(m_Data, m_Size);
 }
 
 
 template<VectorItemRequires T>
 inline ConstIterator<T> Vector<T>::cend() const noexcept
 {
-	return ConstIterator<T>(*this) + Size();
+	return ConstIterator<T>(m_Data, m_Size) + Size();
 }
 
 template<VectorItemRequires T>

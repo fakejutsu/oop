@@ -20,7 +20,8 @@ public:
 
     ConstIterator() = default;
     ConstIterator(ConstIterator<T> const &) noexcept;
-    ConstIterator(const Vector<T>&) noexcept;
+    explicit ConstIterator(const Vector<T>&) noexcept;
+    ConstIterator(std::shared_ptr<T[]> const& dataPtr, int size) noexcept;
 
     ~ConstIterator() = default;
 
@@ -110,7 +111,10 @@ template<RandomAccess T>
 template<IteratorChangeStep U>
 inline ConstIterator<T> ConstIterator<T>::operator+(U number)
 {
-    return ConstIterator<T>();
+    ConstIterator<T> it(*this);
+    it += number;
+
+    return it;
 }
 
 template<RandomAccess T>
@@ -180,8 +184,9 @@ inline auto ConstIterator<T>::operator<=>(const ConstIterator<T> const& second) 
     return this->index <=> second.index;
 }
 
+
 template<RandomAccess T>
-inline ConstIterator<T>::ConstIterator(ConstIterator<T>const & it) noexcept
+inline ConstIterator<T>::ConstIterator(ConstIterator<T>const& it) noexcept
 {
     this->dataPtr = it.dataPtr;
     this->index = it.index;
@@ -189,11 +194,16 @@ inline ConstIterator<T>::ConstIterator(ConstIterator<T>const & it) noexcept
 }
 
 template<RandomAccess T>
-inline ConstIterator<T>::ConstIterator(const Vector<T>& v) noexcept
+inline ConstIterator<T>::ConstIterator(Vector<T> const & v) noexcept : ConstIterator<T>(v.cbegin())
 {
-    this->dataPtr = v.m_Data;
-    this->size = v.Size();
+}
+
+template<RandomAccess T>
+inline ConstIterator<T>::ConstIterator(std::shared_ptr<T[]> const& dataPtr, int size) noexcept
+{
+    this->dataPtr = dataPtr;
     this->index = 0;
+    this->size = size;
 }
 
 template<RandomAccess T>
