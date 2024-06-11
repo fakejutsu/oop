@@ -14,9 +14,17 @@
 #include "../Iterators/Iterator.hpp"
 #include "../Iterators/ConstIterator.hpp"
 #include "../Concepts/Concepts.hpp"
+#include <numeric>
+#include <ranges>
+#include <algorithm>
+#include <tuple>
+#include <vector>
 
-//template <typename T>
-//concept VectorItemRequires = std::is_arithmetic<T>::value;
+template <typename T>
+concept RangeConcept = requires (T t)
+{
+    t.begin(); t.end();
+};
 
 
 template <VectorItemRequires T>
@@ -29,20 +37,24 @@ private:
 	int m_Size = 0;
 	std::shared_ptr<T[]> m_Data = nullptr;
 
-	using m_ValueType = T;
+
 
 	void AllocSize(int size);
 
 	template<VectorItemRequires U>
-	void CheckZeroDiv(int line, Vector<U> const& vectorToCheck);
+	void CheckZeroDiv(int line, Vector<U> const& vectorToCheck) const;
 
 	template<VectorItemRequires U>
-	void CheckZeroDiv(int line, U numberToCheck);
+	void CheckZeroDiv(int line, U numberToCheck) const;
 
 	void CheckLength(int line);
 	void CheckRange(int line, int indexToCheck);
 
 public:
+
+    using value_type = T;
+    using iterator = Iterator<T>;
+    using const_iterator = ConstIterator<T>;
 
 	bool IsEmpty() const override;
 	int Size() const noexcept;
@@ -65,7 +77,8 @@ public:
 
 	explicit Vector(const std::initializer_list<T> fromList);
 
-	static Vector<T> UnitVector(int length);
+
+    static Vector<T> UnitVector(int length);
 
 #pragma endregion constructors
 
@@ -75,20 +88,20 @@ public:
 
 
 	template <VectorItemRequires U>
-	decltype(auto) Sum(Vector<U> const& v2);
+	decltype(auto) Sum(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) Mul(Vector<U> const& v2);
+	decltype(auto) Mul(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) Div(Vector<U> const& v2);
+	decltype(auto) Div(Vector<U> const& v2) const;
 
 	template <VectorItemRequires U>
-	decltype(auto) Diff(Vector<U> const& v2);
+	decltype(auto) Diff(Vector<U> const& v2) const;
 
 
 	template <typename U>
-	decltype(auto) ScalarProduct(const Vector<U>& v2);
+	decltype(auto) ScalarProduct(const Vector<U>& v2) const;
 
 
 	template <VectorItemRequires U>
@@ -133,7 +146,15 @@ public:
 	Iterator<T> begin() noexcept;
 	Iterator<T> end() noexcept;
 
-	ConstIterator<T> cbegin() const noexcept;
+    ConstIterator<T> begin() const noexcept {
+        return cbegin();
+    }
+
+    ConstIterator<T> end() const noexcept {
+        return cend();
+    }
+
+    ConstIterator<T> cbegin() const noexcept;
 	ConstIterator<T> cend() const noexcept;
 
 
@@ -200,11 +221,7 @@ inline Vector<T>::Vector(int length)
 template<VectorItemRequires T>
 inline Vector<T>::Vector(const Vector& v) : Vector(v.Size())
 {
-	for (int i = 0; i < v.Size(); ++i)
-	{
-		Vector<T>& alias = (*this);
-		alias[i] = v[i];
-	}
+    std::copy(v.cbegin(), v.cend(), begin());
 }
 template<VectorItemRequires T>
 inline Vector<T>::Vector(Vector&& v)
@@ -217,40 +234,27 @@ inline Vector<T>::Vector(Vector&& v)
 
 template<VectorItemRequires T>
 inline Vector<T>::Vector(int length, std::shared_ptr<T[]> arr) : Vector(length) {
-	for (int i = 0; i < length; ++i)
-	{
-		m_Data[i] = arr[i];
-	}
+    std::copy(arr, arr + length, begin());
 }
 
 template<VectorItemRequires T>
 inline Vector<T>::Vector(int length, const T& fill) : Vector(length)
 {
-	for (int i = 0; i < length; ++i)
-	{
-		(*this)[i] = fill;
-	}
+	std::fill(begin(), end(), fill);
 }
 
 template<VectorItemRequires T>
 inline Vector<T>::Vector(int length, T* arr) : Vector(length)
 {
-	for (int i = 0; i < length; ++i)
-	{
-		(*this)[i] = arr[i];
-	}
+    std::copy(arr, arr + length, begin());
 }
 
 template<VectorItemRequires T>
 inline Vector<T>::Vector(const std::initializer_list<T> fromList) : Vector(fromList.end() - fromList.begin())
 {
-	int i = 0;
-	for (auto& it : fromList)
-	{
-		(*this)[i] = it;
-		++i;
-	}
+    std::copy(fromList.begin(), fromList.end(), begin());
 }
+
 
 template<VectorItemRequires T>
 inline Vector<T> Vector<T>::UnitVector(int length)
@@ -288,10 +292,10 @@ inline decltype(auto) Vector<T>::VectorLen() const noexcept
 {
 	decltype(T() * T() + T() * T()) sqSum = 0;
 	decltype(sqrt(sqSum)) len = 0;
-	for (int i = 0; i < this->m_Size; ++i)
-	{
-		sqSum += (*this)[i] * (*this)[i];
-	}
+
+    auto squares = *this | std::views::transform([](T el) { return el * el; });
+
+    sqSum = std::accumulate(squares.begin(), squares.end(), 0);
 
 	len = sqrt(sqSum);
 
@@ -302,11 +306,8 @@ template<VectorItemRequires T>
 inline decltype(auto) Vector<T>::Normalized()
 {
 	auto len = VectorLen();
-	Vector< decltype((1.0 * (*this)[0]) / len) > normalizedVector(this->Size());
-	for (int i = 0; i < normalizedVector.Size(); ++i)
-	{
-		normalizedVector[i] = (1.0 * (*this)[i]) / len;
-	}
+
+    Vector< decltype((1.0 * (*this)[0]) / len)> normalizedVector = *this | std::views::transform([](T el) { return  (1.0 * (el) / len);});
 
 	return normalizedVector;
 }
@@ -354,35 +355,25 @@ template<VectorItemRequires T>
 std::ostream& operator << (std::ostream& os, const Vector<T>& v)
 {
 	os << '(';
-	for (int i = 0; i < v.Size(); ++i)
-	{
-		os << v[i];
-		if (i != v.Size() - 1)
-		{
-			os << ", ";
-		}
-	}
+	std::for_each(v.cbegin(), v.cbegin() + v.Size(), [&os](T el) { os << el << ',';});
 
 	return os << ')';
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline void Vector<T>::CheckZeroDiv(int line, Vector<U> const& vectorToCheck)
+inline void Vector<T>::CheckZeroDiv(int line, Vector<U> const& vectorToCheck) const
 {
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		U number = vectorToCheck[i];
-		if (number == U(0))
-		{
-			throw ZeroDivException(__FILE__, line, "При деление векторов делитель не может содержать нулевых координат");
-		}
-	}
+
+    if (std::ranges::any_of(vectorToCheck, [](U el) { return el ==  U(0);}))
+    {
+        throw ZeroDivException(__FILE__, line, "При деление векторов делитель не может содержать нулевых координат");
+    }
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline void Vector<T>::CheckZeroDiv(int line, U numberToCheck)
+inline void Vector<T>::CheckZeroDiv(int line, U numberToCheck) const
 {
 	if (numberToCheck == 0)
 	{
@@ -393,7 +384,7 @@ inline void Vector<T>::CheckZeroDiv(int line, U numberToCheck)
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Sum(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Sum(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -405,19 +396,23 @@ inline decltype(auto) Vector<T>::Sum(Vector<U> const& v2)
 		throw OperationInvalidParams(__FILE__, __LINE__, "Невозможно сложить разные по размеру векторы");
 	}
 
-	Vector<decltype(v2[0] + (*this)[0])> answer(v2.Size());
+    auto v1 = std::ranges::views::filter(*this, [](T el) { return true ;});
+    auto v3 = std::ranges::views::filter(v2, [](U el) { return true ;});
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = v2[i] + (*this)[i];
-	}
+    Vector<decltype(v2[0] + (*this)[0])> answer(this->Size());
+
+    auto zipped = std::ranges::views::zip(v1, v3);
+
+    auto res = zipped | std::ranges::views::transform([] (const auto & p) { return std::get<0>(p) + std::get<1>(p); });
+
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
 
 	return answer;
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Mul(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Mul(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -429,19 +424,23 @@ inline decltype(auto) Vector<T>::Mul(Vector<U> const& v2)
 		throw OperationInvalidParams(__FILE__, __LINE__, "Невозможно умножить разные по размеру векторы");
 	}
 
-	Vector<decltype(v2[0] * (*this)[0])> answer(v2.Size());
+    auto v1 = std::ranges::views::filter(*this, [](T el) { return true ;});
+    auto v3 = std::ranges::views::filter(v2, [](U el) { return true ;});
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = v2[i] * (*this)[i];
-	}
+    Vector<decltype(v2[0] + (*this)[0])> answer(this->Size());
+
+    auto zipped = std::ranges::views::zip(v1, v3);
+
+    auto res = zipped | std::ranges::views::transform([] (const auto & p) { return std::get<0>(p) * std::get<1>(p); });
+
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
 
 	return answer;
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Div(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Div(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -457,19 +456,25 @@ inline decltype(auto) Vector<T>::Div(Vector<U> const& v2)
 
 	CheckZeroDiv(__LINE__, v2);
 
-	Vector<decltype(v2[0] / (*this)[0])> answer(v2.Size());
+    auto v1 = std::ranges::views::filter(*this, [](T el) { return true ;});
+    auto v3 = std::ranges::views::filter(v2, [](U el) { return true ;});
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = (*this)[i] / v2[i];
-	}
+    Vector<decltype(v2[0] + (*this)[0])> answer(this->Size());
+
+    auto zipped = std::ranges::views::zip(v1, v3);
+
+    auto res = zipped | std::ranges::views::transform([] (const auto & p) { return std::get<0>(p) / std::get<1>(p); });
+
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
+
+    return answer;
 
 	return answer;
 }
 
 template<VectorItemRequires T>
 template<VectorItemRequires U>
-inline decltype(auto) Vector<T>::Diff(Vector<U> const& v2)
+inline decltype(auto) Vector<T>::Diff(Vector<U> const& v2) const
 {
 	if (this->IsEmpty() || v2.IsEmpty())
 	{
@@ -481,19 +486,23 @@ inline decltype(auto) Vector<T>::Diff(Vector<U> const& v2)
 		throw OperationInvalidParams(__FILE__, __LINE__, "Невозможно отнять разные по размеру векторы");
 	}
 
-	Vector<decltype(v2[0] - (*this)[0])> answer(v2.Size());
+    auto v1 = std::ranges::views::filter(*this, [](T el) { return true ;});
+    auto v3 = std::ranges::views::filter(v2, [](U el) { return true ;});
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = v2[i] - (*this)[i];
-	}
+    Vector<decltype(v2[0] + (*this)[0])> answer(this->Size());
 
-	return answer;
+    auto zipped = std::ranges::views::zip(v1, v3);
+
+    auto res = zipped | std::ranges::views::transform([] (const auto & p) { return std::get<0>(p) - std::get<1>(p); });
+
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
+
+    return answer;
 }
 
 template<VectorItemRequires T>
 template<typename U>
-inline decltype(auto) Vector<T>::ScalarProduct(const Vector<U>& v2)
+inline decltype(auto) Vector<T>::ScalarProduct(const Vector<U>& v2) const
 {
 	if (this->m_Size == 0 || v2.m_Size == 0)
 	{
@@ -504,13 +513,17 @@ inline decltype(auto) Vector<T>::ScalarProduct(const Vector<U>& v2)
 		throw OperationInvalidParams(__FILE__, __LINE__, "Vector sizes is not equal");
 	}
 
-	decltype((*this)[0] * v2[0] + (*this)[0] * v2[0]) answer = 0;
-	for (int i = 0; i < Size(); ++i)
-	{
-		answer += (*this)[i] * v2[i];
-	}
+    auto v1 = std::ranges::views::filter(*this, [](T el) { return true ;});
+    auto v3 = std::ranges::views::filter(v2, [](U el) { return true ;});
 
-	return answer;
+    auto zipped = std::ranges::views::zip(v1, v3);
+
+    double sum = 0;
+
+    auto f = zipped | std::ranges::views::transform([&sum] (const auto & p) { sum += std::get<0>(p) * std::get<1>(p); return std::get<0>(p);});
+    auto v123 = std::ranges::to<std::vector<int>>();
+
+	return sum;
 }
 
 template<VectorItemRequires T>
@@ -522,12 +535,14 @@ inline decltype(auto) Vector<T>::operator+(const U& el)
 		throw EmptyVectorException(__FILE__, __LINE__);
 	}
 
-	Vector<decltype(el + (*this)[0])> answer(this->Size());
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = (*this)[i] + el;
-	}
+    Vector<decltype((*this)[0] / el)> answer(this->Size());
+
+    auto res = *this | std::ranges::views::transform([&el](T a) { return a + el; });
+
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
+
+    return answer;
 
 	return answer;
 }
@@ -541,12 +556,11 @@ inline decltype(auto) Vector<T>::operator-(const U& el)
 		throw EmptyVectorException(__FILE__, __LINE__);
 	}
 
-	Vector<decltype(el + (*this)[0])> answer(this->Size());
+    Vector<decltype((*this)[0] / el)> answer(this->Size());
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = (*this)[i] - el;
-	}
+    auto res = *this | std::ranges::views::transform([&el](T a) { return a - el; });
+
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
 
 	return answer;
 }
@@ -582,15 +596,13 @@ inline decltype(auto) Vector<T>::operator*(const U& el)
 		throw EmptyVectorException(__FILE__, __LINE__);
 	}
 
-	Vector<decltype(el* (*this)[0])> answer(this->Size());
+    Vector<decltype((*this)[0] / el)> answer(this->Size());
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = (*this)[i] * el;
-	}
+    auto res = *this | std::ranges::views::transform([&el](T a) { return a * el; });
 
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
 
-	return answer;
+    return answer;
 }
 
 template<VectorItemRequires T>
@@ -611,14 +623,13 @@ inline decltype(auto) Vector<T>::operator/(const U& el)
 	}
 
 	CheckZeroDiv(__LINE__, el);
-	
 
-	Vector<decltype(el / (*this)[0])> answer(this->Size());
+    Vector<decltype((*this)[0] / el)> answer(this->Size());
 
-	for (int i = 0; i < this->Size(); ++i)
-	{
-		answer[i] = (*this)[i] / el;
-	}
+    auto res = *this | std::ranges::views::transform([&el](T a) { return a / el; });
 
-	return answer;
+    std::ranges::copy(res.begin(), res.end(), answer.begin());
+
+    return answer;
+
 }

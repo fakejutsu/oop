@@ -6,7 +6,6 @@
 #define CONSTITERATOR_H
 
 #include "IteratorBase.h"
-#include "../Vector/VectorItemConcept.h"
 #include "../Exceptions/InvalidIteratorException.h"
 #include "../Concepts/Concepts.hpp"
 
@@ -15,7 +14,9 @@ class ConstIterator : public IteratorBase
 {
 public:
     using iterator_category = std::random_access_iterator_tag;
-    using value_type = T;
+    using value_type = const T;
+    using pointer = T const *;
+    using reference = const T &;
     using difference_type = int;
 
     ConstIterator() = default;
@@ -24,9 +25,9 @@ public:
 
     ~ConstIterator() = default;
 
-    const T& operator *();
-    const T* operator->();
-    const T& operator[](const int offset);
+    reference operator *() const;
+    pointer operator->();
+    reference operator[](const int offset);
 
     operator bool() const noexcept;
 
@@ -58,8 +59,8 @@ public:
 protected:
     T* GetPtr() const;
 
-    void CheckExpired(int line);
-    void CheckRange(int line, int indexToCheck);
+    void CheckExpired(int line) const;
+    void CheckRange(int line, int indexToCheck) const;
 
 private:
     std::weak_ptr<T[]> dataPtr;
@@ -78,7 +79,7 @@ inline const T& ConstIterator<T>::operator[](const int offset)
 template<RandomAccess T>
 inline ConstIterator<T>::operator bool() const noexcept
 {
-    return !(dataPtr.expired || dataPtr == nullptr);
+    return !(dataPtr.expired() || dataPtr.lock() == nullptr);
 }
 
 template<RandomAccess T>
@@ -110,7 +111,10 @@ template<RandomAccess T>
 template<IteratorChangeStep U>
 inline ConstIterator<T> ConstIterator<T>::operator+(U number)
 {
-    return ConstIterator<T>();
+    auto it = ConstIterator<T>(*this);
+    it += number;
+
+    return it;
 }
 
 template<RandomAccess T>
@@ -157,7 +161,7 @@ inline T* ConstIterator<T>::GetPtr() const
 }
 
 template<RandomAccess T>
-inline void ConstIterator<T>::CheckExpired(int line)
+inline void ConstIterator<T>::CheckExpired(int line) const
 {
     if (this->dataPtr.expired())
     {
@@ -166,7 +170,7 @@ inline void ConstIterator<T>::CheckExpired(int line)
 }
 
 template<RandomAccess T>
-inline void ConstIterator<T>::CheckRange(int line, int indexToCheck)
+inline void ConstIterator<T>::CheckRange(int line, int indexToCheck) const
 {
     if (indexToCheck >= this->size)
     {
@@ -197,7 +201,7 @@ inline ConstIterator<T>::ConstIterator(const Vector<T>& v) noexcept
 }
 
 template<RandomAccess T>
-inline const T& ConstIterator<T>::operator*()
+inline ConstIterator<T>::reference ConstIterator<T>::operator*() const
 {
     CheckExpired(__LINE__);
     CheckRange(__LINE__, this->index);
@@ -206,7 +210,7 @@ inline const T& ConstIterator<T>::operator*()
 }
 
 template<RandomAccess T>
-inline const T* ConstIterator<T>::operator->()
+inline ConstIterator<T>::pointer ConstIterator<T>::operator->()
 {
     CheckExpired(__LINE__);
     CheckRange(__LINE__, this->index);

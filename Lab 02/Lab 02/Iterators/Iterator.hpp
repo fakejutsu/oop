@@ -7,7 +7,6 @@
 
 #include "IteratorBase.h"
 #include "../Concepts/Concepts.hpp"
-#include "../Vector/VectorItemConcept.h"
 #include "../Exceptions/InvalidIteratorException.h"
 
 template<VectorItemRequires T>
@@ -18,7 +17,9 @@ class Iterator: public IteratorBase
 {
 public:
     using iterator_category = std::random_access_iterator_tag;
-    using value_type = T;
+    using value_type = const T;
+    using pointer = T const *;
+    using reference = const T &;
     using difference_type = int;
 
     Iterator() = default;
